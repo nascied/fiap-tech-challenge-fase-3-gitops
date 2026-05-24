@@ -2,7 +2,23 @@
 
 ---
 
-## O QUE VOCE PRECISA INSTALAR (so na primeira vez)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## O QUE VOCE PRECISA INSTALAR
 
 **1. Docker Desktop**
 - Baixe em: https://www.docker.com/products/docker-desktop/
