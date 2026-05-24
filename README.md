@@ -8,7 +8,7 @@
 - Baixe em: https://www.docker.com/products/docker-desktop/
 - Instale, reinicie o PC se pedir
 - Abra o Docker Desktop, va em Settings > Kubernetes, marque **Enable Kubernetes**, clique em **Apply & Restart**
-- Aguarde o circulo verde no canto inferior esquerdo — quando ficar verde, esta pronto
+- Aguarde o circulo verde no canto inferior esquerdo â€” quando ficar verde, esta pronto
 
 **2. Git**
 - Baixe em: https://git-scm.com/download/win
@@ -16,7 +16,7 @@
 
 ---
 
-## COMO EXECUTAR (video do Renan)
+## COMO EXECUTAR
 
 Abra o **PowerShell** (tecla Iniciar > pesquise PowerShell > abra)
 
@@ -71,7 +71,7 @@ kubectl get services -n fiap
 
 ---
 
-## DEMONSTRAR O GITOPS AO VIVO (ponto alto do video)
+## DEMONSTRAR O GITOPS
 
 Abra o arquivo `gitops\auth\deployment.yaml` no Bloco de Notas e mude:
 ```
