@@ -1,5 +1,4 @@
 # GitOps - FIAP Tech Challenge Fase 3
-# GitOps - FIAP Tech Challenge Fase 3
 
 ---
 
