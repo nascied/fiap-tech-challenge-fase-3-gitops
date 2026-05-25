@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
         - name: analytics-service
-          image: analytics-service:v1.0.1
+          image: analytics-service:v1.0.0
           ports:
             - containerPort: 8080
