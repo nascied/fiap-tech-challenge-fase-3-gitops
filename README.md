@@ -38,21 +38,18 @@ O repositório Git é tratado como a **única fonte da verdade** do estado do cl
 fiap-tech-challenge-fase-3-gitops/
 │
 ├── argocd/
-│   └── application.yaml          ← Recurso Application do ArgoCD
+│   ├── application-auth-service.yaml        ← Application do ArgoCD (auth-service)
+│   ├── application-flag-service.yaml        ← Application do ArgoCD (flag-service)
+│   ├── application-targeting-service.yaml   ← Application do ArgoCD (targeting-service)
+│   ├── application-evaluation-service.yaml  ← Application do ArgoCD (evaluation-service)
+│   └── application-analytics-service.yaml   ← Application do ArgoCD (analytics-service)
 │
-├── gitops/                        ← Manifests Kubernetes observados pelo ArgoCD
-│   ├── analytics/
-│   │   ├── deployment.yaml
-│   │   └── service.yaml
-│   ├── auth/
-│   │   ├── deployment.yaml
-│   │   └── service.yaml
-│   ├── evaluation/
-│   │   └── deployment.yaml
-│   ├── flag/
-│   │   └── deployment.yaml
-│   └── targeting/
-│       └── service.yaml
+├── helm/                          ← Um Helm chart independente por microsserviço
+│   ├── auth-service/
+│   ├── flag-service/
+│   ├── targeting-service/
+│   ├── evaluation-service/
+│   └── analytics-service/         ← inclui KEDA (ScaledObject + TriggerAuthentication)
 │
 ├── RELATORIO.md
 └── README.md
@@ -62,35 +59,41 @@ fiap-tech-challenge-fase-3-gitops/
 
 ## 🔧 Configuração do ArgoCD
 
-O arquivo `argocd/application.yaml` define como o ArgoCD monitora e sincroniza este repositório com o cluster.
+Cada microsserviço tem seu próprio recurso `Application`, apontando para o respectivo Helm chart em `helm/<serviço>`. Isso permite sincronizar, promover ou reverter cada serviço de forma independente.
 
 | Parâmetro | Valor |
 |---|---|
-| Nome da aplicação | `fiap-app` |
+| Nome das aplicações | `auth-service`, `flag-service`, `targeting-service`, `evaluation-service`, `analytics-service` |
 | Namespace do ArgoCD | `argocd` |
 | Repositório monitorado | `https://github.com/nascied/fiap-tech-challenge-fase-3-gitops` |
 | Branch monitorada | `main` |
-| Pasta dos manifests | `gitops/` |
+| Pasta do chart | `helm/<serviço>` |
 | Cluster de destino | `https://kubernetes.default.svc` |
-| Namespace de deploy | `fiap` |
+| Namespace de deploy | `fiap-tc-f4` |
 | Sincronização automática | ativada |
 | Auto-correção de desvios (`selfHeal`) | ativada |
 | Remoção de recursos deletados (`prune`) | ativada |
 | Criação automática do namespace | ativada |
 
+Para registrar todas as aplicações de uma vez:
+
+```bash
+kubectl apply -f argocd/
+```
+
 ---
 
 ## 🧩 Microsserviços
 
-Cada subpasta dentro de `gitops/` representa um microsserviço. Todos rodam na porta `8080` internamente e são expostos dentro do cluster via `ClusterIP`.
+Cada pasta dentro de `helm/` é um chart Helm completo (Deployment, Service, ConfigMap, Secret, HPA e, no caso do `analytics-service`, `ScaledObject`/`TriggerAuthentication` do KEDA para escalonamento por fila SQS). A tag da imagem de cada serviço fica em `helm/<serviço>/values.yaml` (`image.repository` / `image.tag`).
 
-| Serviço | Deployment | Service |
+| Serviço | Porta | Autoscaling |
 |---|---|---|
-| `analytics-service` | ✅ | ✅ |
-| `auth-service` | ✅ | ✅ |
-| `evaluation-service` | ✅ | ⚠️ ausente |
-| `flag-service` | ✅ | ⚠️ ausente |
-| `targeting-service` | ⚠️ ausente | ✅ |
+| `auth-service` | 8001 | HPA (CPU/memória) |
+| `flag-service` | 8002 | HPA (CPU/memória) |
+| `targeting-service` | 8003 | HPA (CPU/memória) |
+| `evaluation-service` | 8004 | HPA (CPU/memória) |
+| `analytics-service` | 8005 | KEDA (fila SQS) |
 
 ---
 
@@ -129,10 +132,10 @@ Aguarde todos os pods ficarem com status `Running`:
 kubectl get pods -n argocd
 ```
 
-**2. Registrar a aplicação**
+**2. Registrar as aplicações**
 
 ```bash
-kubectl apply -f argocd/application.yaml
+kubectl apply -f argocd/
 ```
 
 **3. Abrir o painel do ArgoCD**
@@ -157,62 +160,47 @@ Decodifique o resultado em um segundo terminal:
 
 **4. Simular uma atualização**
 
-Edite `gitops/auth/deployment.yaml` e altere a versão da imagem:
+Edite `helm/auth-service/values.yaml` e altere a tag da imagem:
 
 ```yaml
 # antes
-image: auth-service:v1.0.0
+image:
+  tag: auth-service-v1
 
 # depois
-image: auth-service:v1.0.1
+image:
+  tag: auth-service-v2
 ```
 
 Envie a mudança:
 
 ```bash
 git add .
-git commit -m "update auth-service para v1.0.1"
+git commit -m "update auth-service para auth-service-v2"
 git push origin main
 ```
 
-Observe o cartão `fiap-app` no painel do ArgoCD mudar para **OutOfSync** e depois **Synced** automaticamente.
+Observe o cartão `auth-service` no painel do ArgoCD mudar para **OutOfSync** e depois **Synced** automaticamente.
 
 **5. Verificar os serviços no cluster**
 
 ```bash
-kubectl get pods -n fiap
-kubectl get services -n fiap
+kubectl get pods -n fiap-tc-f4
+kubectl get services -n fiap-tc-f4
 ```
 
 ---
 
-## 📌 Melhorias Identificadas
+## 📌 Melhorias Identificadas (histórico, já resolvidas na versão Helm)
 
-### 1. `apiVersion` ausente em alguns manifests
+A versão anterior deste repositório usava manifests YAML crus por serviço. Os pontos abaixo foram identificados nessa versão e resolvidos com a migração para Helm chart por microsserviço:
 
-Os arquivos `analytics/deployment.yaml` e `analytics/service.yaml` estão sem o campo `apiVersion`, que é obrigatório para o Kubernetes processar o recurso corretamente.
-
-| Tipo de recurso | `apiVersion` correto |
+| Problema identificado | Situação atual |
 |---|---|
-| Deployment | `apps/v1` |
-| Service | `v1` |
-| Application (ArgoCD) | `argoproj.io/v1alpha1` |
-
-### 2. Manifests faltantes
-
-| Serviço | O que está ausente |
-|---|---|
-| `evaluation-service` | `service.yaml` |
-| `flag-service` | `service.yaml` |
-| `targeting-service` | `deployment.yaml` |
-
-### 3. Imagens sem registry externo
-
-As imagens estão definidas com tags locais, por exemplo `auth-service:v1.0.0`. Em produção devem referenciar o registry real no ECR da AWS:
-
-```yaml
-image: <account>.dkr.ecr.<region>.amazonaws.com/auth-service:v1.0.0
-```
+| `apiVersion` ausente em alguns manifests (`analytics/deployment.yaml`, `analytics/service.yaml`) | Resolvido — todos os templates Helm declaram `apiVersion` |
+| `service.yaml` ausente em `evaluation-service`/`flag-service` | Resolvido — todo chart tem `templates/service.yaml` |
+| `deployment.yaml` ausente em `targeting-service` | Resolvido — todo chart tem `templates/deployment.yaml` |
+| Imagens com tags locais (`auth-service:v1.0.0`, sem registry) | Resolvido — `image.repository` em cada `values.yaml` referencia o ECR real |
 
 ---
 
@@ -225,9 +213,9 @@ image: <account>.dkr.ecr.<region>.amazonaws.com/auth-service:v1.0.0
 | Auto-correção de desvios no cluster (`selfHeal`) | ✅ |
 | Remoção automática de recursos deletados (`prune`) | ✅ |
 | Namespace criado automaticamente | ✅ |
-| Todos os manifests com `apiVersion` | ⚠️ Parcial |
-| Todos os serviços com `Deployment` + `Service` | ⚠️ Parcial |
-| Imagens referenciando registry externo (ECR) | ⚠️ Pendente |
+| Todos os manifests com `apiVersion` | ✅ |
+| Todos os serviços com `Deployment` + `Service` | ✅ |
+| Imagens referenciando registry externo (ECR) | ✅ |
 
 ---
 

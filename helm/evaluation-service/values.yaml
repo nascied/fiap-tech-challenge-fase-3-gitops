@@ -1,0 +1,59 @@
+namespace: fiap-tc-f4
+
+image:
+  repository: 913901705985.dkr.ecr.us-east-1.amazonaws.com/fiap-tc-f4-reg
+  tag: evaluation-service-v1
+
+replicas: 1
+
+port: 8004
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+probe:
+  path: /health
+
+configMap:
+  # Endereços internos do cluster — fixos, não dependem do Terraform
+  AUTH_SERVICE_URL: "http://auth-service-svc:8001"
+  PORT: "8004"
+  FLAG_SERVICE_URL: "http://flag-service-svc:8002"
+  TARGETING_SERVICE_URL: "http://targeting-service-svc:8003"
+  # Substituídos automaticamente pelo update-infra-values.yaml a partir dos outputs
+  # sqs_queue_url, aws_elasticache_cluster_cluster_address do Terraform (fase3)
+  AWS_SQS_URL: "REPLACED_BY_INFRA_PIPELINE"
+  AWS_REGION: "REPLACED_BY_INFRA_PIPELINE"
+  REDIS_URL: "REPLACED_BY_INFRA_PIPELINE"
+
+secret:
+  # AWS_* substituídos automaticamente pelo update-infra-values.yaml, com as credenciais
+  # AWS repassadas pelo fase3 no repository_dispatch (mesmas usadas no terraform apply)
+  # SERVICE_API_KEY: NÃO é automático — só existe depois que o auth-service gera/valida
+  # a chave em runtime. Preencher manualmente aqui após a aplicação estar no ar.
+  SERVICE_API_KEY: "SET_MANUALLY_AFTER_APP_IS_RUNNING"
+  AWS_ACCESS_KEY_ID: "REPLACED_BY_INFRA_PIPELINE"
+  AWS_SECRET_ACCESS_KEY: "REPLACED_BY_INFRA_PIPELINE"
+  AWS_SESSION_TOKEN: "REPLACED_BY_INFRA_PIPELINE"
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  cpuUtilization: 70
+  memoryUtilization: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  path: /evaluate(/|$)(.*)
+
+keda:
+  enabled: false

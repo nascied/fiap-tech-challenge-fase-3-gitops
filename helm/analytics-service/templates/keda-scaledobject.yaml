@@ -1,0 +1,22 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .Chart.Name }}-scale-object
+  namespace: {{ .Values.namespace }}
+spec:
+  scaleTargetRef:
+    name: {{ .Chart.Name }}
+  pollingInterval: {{ .Values.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.keda.cooldownPeriod }}
+  minReplicaCount: {{ .Values.keda.minReplicaCount }}
+  maxReplicaCount: {{ .Values.keda.maxReplicaCount }}
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: {{ .Chart.Name }}-aws-auth
+      metadata:
+        queueURL: {{ .Values.keda.queueURL }}
+        awsRegion: {{ .Values.keda.awsRegion }}
+        queueLength: {{ .Values.keda.queueLength | quote }}
+{{- end }}

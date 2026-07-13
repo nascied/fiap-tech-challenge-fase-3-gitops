@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: targeting-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nascied/fiap-tech-challenge-fase-3-gitops
+    targetRevision: main
+    path: helm/targeting-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: fiap-tc-f4
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
