@@ -38,11 +38,19 @@ O repositório Git é tratado como a **única fonte da verdade** do estado do cl
 fiap-tech-challenge-fase-3-gitops/
 │
 ├── argocd/
-│   ├── application-auth-service.yaml        ← Application do ArgoCD (auth-service)
-│   ├── application-flag-service.yaml        ← Application do ArgoCD (flag-service)
-│   ├── application-targeting-service.yaml   ← Application do ArgoCD (targeting-service)
-│   ├── application-evaluation-service.yaml  ← Application do ArgoCD (evaluation-service)
-│   └── application-analytics-service.yaml   ← Application do ArgoCD (analytics-service)
+│   ├── root.yaml                   ← único Application aplicado manualmente (bootstrap)
+│   ├── root/                       ← Application "avó": ordena a sincronização via sync-wave
+│   │   ├── root-infra.yaml          (wave -2 — sincroniza antes)
+│   │   └── root-applications.yaml   (wave -1)
+│   ├── infra/                      ← Applications de plataforma (chart público)
+│   │   ├── application-ingress-nginx.yaml
+│   │   └── application-keda.yaml
+│   └── applications/               ← Applications de negócio (uma por microsserviço)
+│       ├── application-auth-service.yaml
+│       ├── application-flag-service.yaml
+│       ├── application-targeting-service.yaml
+│       ├── application-evaluation-service.yaml
+│       └── application-analytics-service.yaml
 │
 ├── helm/                          ← Um Helm chart independente por microsserviço
 │   ├── auth-service/
@@ -50,6 +58,10 @@ fiap-tech-challenge-fase-3-gitops/
 │   ├── targeting-service/
 │   ├── evaluation-service/
 │   └── analytics-service/         ← inclui KEDA (ScaledObject + TriggerAuthentication)
+│
+├── .github/workflows/             ← Workflows reutilizáveis (chamados pelo repo services)
+│   ├── update-image.yaml
+│   └── update-infra-values.yaml
 │
 ├── RELATORIO.md
 └── README.md
@@ -75,11 +87,41 @@ Cada microsserviço tem seu próprio recurso `Application`, apontando para o res
 | Remoção de recursos deletados (`prune`) | ativada |
 | Criação automática do namespace | ativada |
 
-Para registrar todas as aplicações de uma vez:
+Para registrar tudo de uma vez, aplique só a Application raiz — o padrão **App of Apps** cuida do resto:
 
 ```bash
-kubectl apply -f argocd/
+kubectl apply -f argocd/root.yaml
 ```
+
+---
+
+## 🌳 Estrutura App of Apps
+
+Existem três níveis de `Application`:
+
+1. **`argocd/root.yaml`** — único recurso aplicado manualmente. Aponta para a pasta `argocd/root/`.
+2. **`argocd/root/`** — duas Applications "avó" com `sync-wave` para garantir ordem: `root-infra` (wave `-2`, sincroniza primeiro) e `root-applications` (wave `-1`, depois). Isso é necessário porque `sync-wave` só é respeitado entre recursos de uma mesma operação de sync — por isso elas precisam estar sob o mesmo `root.yaml`, e não serem aplicadas soltas via `kubectl`.
+3. **`argocd/infra/`** e **`argocd/applications/`** — as Applications reais: `ingress-nginx`/`keda` (plataforma, apontam para charts públicos) e os 5 microsserviços (apontam para `helm/<serviço>`).
+
+## ⚙️ Componentes de Plataforma
+
+Além dos 5 microsserviços, este repositório também gerencia dois componentes de infraestrutura do cluster, como charts públicos (sem vendorizar nada):
+
+| Application | Chart | Namespace | Observação |
+|---|---|---|---|
+| `ingress-nginx` | `kubernetes.github.io/ingress-nginx` | `ingress-nginx` | Controller que atende os 5 `Ingress` dos microsserviços |
+| `keda` | `kedacore.github.io/charts` | `keda` | Necessário para o `ScaledObject` do `analytics-service`; usa `ServerSideApply=true` porque o CRD `ScaledJob` é grande demais para o `kubectl apply` padrão (estoura o limite de 256KB de annotation) |
+
+## ⚙️ Workflows Reutilizáveis (`workflow_call`)
+
+Este repositório também expõe dois workflows do GitHub Actions que **não rodam sozinhos** — eles só existem para serem chamados via `uses:` pelas pipelines do repositório `fiap-tech-challenge-fase-3-services`. Por isso, eles nunca aparecem com execução própria na aba *Actions* deste repositório: a run inteira acontece no contexto de quem chama.
+
+| Workflow | Chamado por | O que faz |
+|---|---|---|
+| `update-image.yaml` | Job `update-gitops` de cada `ci-<serviço>.yaml` (repo `services`), a cada build de imagem aprovado | Atualiza `image.repository`/`image.tag` no `values.yaml` do serviço |
+| `update-infra-values.yaml` | `sync-infra-values.yaml` (repo `services`), disparado por `repository_dispatch` vindo do `terraform apply` (repo `fase3`) | Aplica um conjunto dinâmico de campos (`caminho: valor`) no `values.yaml` do serviço, via `yq` — usado para `DATABASE_URL`, endpoint do Redis/SQS/DynamoDB e credenciais AWS |
+
+Ambos exigem o secret `GITOPS_PUSH_TOKEN` (PAT com permissão de escrita neste repositório), configurado no repositório **chamador** (`services`), não aqui — já que é lá que o job efetivamente executa.
 
 ---
 
