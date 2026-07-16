@@ -1,7 +1,7 @@
 namespace: fiap-tc-f4
 image:
   repository: 372515679553.dkr.ecr.us-east-1.amazonaws.com/fiap-tc-f4-auth-reg
-  tag: auth-service-8e95dd2
+  tag: auth-service-4ef7e8e
 replicas: 1
 port: 8001
 resources:
