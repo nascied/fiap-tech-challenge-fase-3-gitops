@@ -1,13 +1,9 @@
 namespace: fiap-tc-f4
-
 image:
-  repository: 913901705985.dkr.ecr.us-east-1.amazonaws.com/fiap-tc-f4-reg
+  repository: 372515679553.dkr.ecr.us-east-1.amazonaws.com/fiap-tc-f4-analytics-reg
   tag: analytics-service-v1
-
 replicas: 1
-
 port: 8005
-
 resources:
   requests:
     cpu: 100m
@@ -15,30 +11,26 @@ resources:
   limits:
     cpu: 200m
     memory: 256Mi
-
 probe:
   path: /health
-
 configMap:
   # Endereço interno do cluster — fixo, não depende do Terraform
   AUTH_SERVICE_URL: "http://auth-service-svc:8001"
   PORT: "8005"
   # Substituídos automaticamente pelo update-infra-values.yaml a partir dos outputs
   # sqs_queue_url, aws_dynamodb_table_name do Terraform (fase3)
-  AWS_SQS_URL: "REPLACED_BY_INFRA_PIPELINE"
-  AWS_DYNAMODB_TABLE: "REPLACED_BY_INFRA_PIPELINE"
-  AWS_REGION: "REPLACED_BY_INFRA_PIPELINE"
-
+  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/372515679553/evaluation-events"
+  AWS_DYNAMODB_TABLE: "ToggleMasterAnalytics"
+  AWS_REGION: "us-east-1"
 secret:
   # AWS_* substituídos automaticamente pelo update-infra-values.yaml, com as credenciais
   # AWS repassadas pelo fase3 no repository_dispatch (mesmas usadas no terraform apply)
   # SERVICE_API_KEY: NÃO é automático — só existe depois que o auth-service gera/valida
   # a chave em runtime. Preencher manualmente aqui após a aplicação estar no ar.
   SERVICE_API_KEY: "SET_MANUALLY_AFTER_APP_IS_RUNNING"
-  AWS_ACCESS_KEY_ID: "REPLACED_BY_INFRA_PIPELINE"
-  AWS_SECRET_ACCESS_KEY: "REPLACED_BY_INFRA_PIPELINE"
-  AWS_SESSION_TOKEN: "REPLACED_BY_INFRA_PIPELINE"
-
+  AWS_ACCESS_KEY_ID: "ASIAVNO5KFVAQ4NJ2XAX"
+  AWS_SECRET_ACCESS_KEY: "cCh/lto44ZiCApXEiSvqifC7a52ORiQmkzVTm+UI"
+  AWS_SESSION_TOKEN: "IQoJb3JpZ2luX2VjEG8aCXVzLXdlc3QtMiJHMEUCIQD5F0qkptvQOtn3OS3yd3leWlksYJV6vqtBwoZ1HJ7ZVgIgDsg+OPgUb8wPUqRpULhfkTQ425jKXcVKq+/TS7zuhzwqsgIIOBABGgwzNzI1MTU2Nzk1NTMiDPt4Kuz5wN3l7cnIbSqPAra+/LvtkMZ+nGMiIu5JdEE6Aoz2vjLSPUOdYIznyUqIsgxkEeclU43iyIo/fuvdbfXwtJoOvaYXwvaKTRDVvUFRD6ie3/VlrXQMkW6r9DksGSq/2XOt7jtjHOxs0cZycZZkv/Hhjile1CfL8KIXzoUdpD6Oog3+jAoUbb/wKuR8/RdhhPYM+3k5k6sskvB1BrCLGyP8Hlan2a62MLmF6r0VFncUqQSCcYjem7Y0uszpb6K0bzUzBiocntAv+sUrn7PITNuLQ7YigZnXMQYPZddHjdqizf1AzIdrubJO3zNSyYHLubEa0lZEHENeSCTfWNni8u+kOTpTIUb8LVesqhvf1Dx/NTb0ZcH/YufzGC8whZrg0gY6nQENSQ4OkST6eMaEh5S+K22JWUyhwYcEcKB2xQtQy85kdXh0HT3SHJ7eZE8S6LDqALudyz+VK6vYNeta0Jr0iJsZO8T8fZSsNYd29BixDgHhZTifdF5r5X8AdMH1Bxnlp/SR0Zz5SSI5LLyNmCbPBL95IvV4JJWQtUzbN+2nGqn4AMhzTfFXsh8yMZav7EgSh4xV721qfwm26k7fEEAK"
 # Escalonamento via KEDA (fila SQS), não via HPA de CPU/memória
 autoscaling:
   enabled: false
@@ -46,7 +38,6 @@ autoscaling:
   maxReplicas: 3
   cpuUtilization: 70
   memoryUtilization: 80
-
 keda:
   enabled: true
   pollingInterval: 30
@@ -54,10 +45,9 @@ keda:
   minReplicaCount: 0
   maxReplicaCount: 10
   # Substituídos automaticamente pelo update-infra-values.yaml (mesmos outputs do AWS_SQS_URL/AWS_REGION acima)
-  queueURL: "REPLACED_BY_INFRA_PIPELINE"
-  awsRegion: "REPLACED_BY_INFRA_PIPELINE"
+  queueURL: "https://sqs.us-east-1.amazonaws.com/372515679553/evaluation-events"
+  awsRegion: "us-east-1"
   queueLength: "5"
-
 ingress:
   enabled: true
   className: nginx
