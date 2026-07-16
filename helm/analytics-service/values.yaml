@@ -27,7 +27,7 @@ secret:
   # AWS repassadas pelo fase3 no repository_dispatch (mesmas usadas no terraform apply)
   # SERVICE_API_KEY: NÃO é automático — só existe depois que o auth-service gera/valida
   # a chave em runtime. Preencher manualmente aqui após a aplicação estar no ar.
-  SERVICE_API_KEY: "SET_MANUALLY_AFTER_APP_IS_RUNNING"
+  SERVICE_API_KEY: "tm_key_2743deff552c19845f3ef40dc6d68cd329d9ff441e012d49cb1d667183625171"
   AWS_ACCESS_KEY_ID: "ASIAVNO5KFVAVYC52V4D"
   AWS_SECRET_ACCESS_KEY: "rx8Z/f7Bg1TBoTT6wgu+Le3gNGm2aeE9GIDQw7KC"
   AWS_SESSION_TOKEN: "IQoJb3JpZ2luX2VjEIT//////////wEaCXVzLXdlc3QtMiJGMEQCIE0Y9Xy90CK5YtqKS7QUwVQ/+pqtYgK/GypNEJzJDNOZAiARge1xeKu1xT8F7CKByoMH9Mn0v3+hLM4Ja+8uckHMgSqyAghNEAEaDDM3MjUxNTY3OTU1MyIM/CVUZUVMMo0zg6/DKo8C7Xtr1uZth+7ZrpR9WdrDRWchYSi6g7XsnNquddmNmpa8so4PQxzFfASexw4PZlMVy2WgssspIVzvv3F5iaLyVlCjXKosB2R7yNZHzBzNMgiqGXYY0ua3atXmlBMs6mkZuxvb21yx8WPVdKThOJu1kQXVQpiHI5obQ7BxXAohZyRLQZkpl/vyg19WzX2mj//KHhbXOFfyrVeoulS9HT3RVsac3Q2fNdXOhTsNmU3KxMo/GSCMtA9hRxGJvSK6rS25AGy8UGI1r2wxkFW9qBisfStj/0ju7R+tmQxvWipnNt0XwDWs4Rl+NtJTKDfJsYnvRK8j9jp4Tzv144Zv8LVjbcOvjDf7t+YTse2fUyaKUTDj7eTSBjqeAQXw0V18dVnByyg8Ax1RY5DMN0GFElL1JKwzlPYUhSHSjR+G8ep9GoxxPCwzgQ6+LNwmqeSn+/MWhk8RXjOQcF7Hv0397g27/7kukxxh0nYf7NEvXp/Gx0RtaepQl6j9Rpmyaa1piaQYAvaa5z5I4O1BWUvzZH+afAVWJK5bSaVKgu9ccpPHZO97tKhZ5DYL1AWQGn34wy3ACOjKm5Kp"
