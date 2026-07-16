@@ -1,7 +1,7 @@
 namespace: fiap-tc-f4
 image:
   repository: 372515679553.dkr.ecr.us-east-1.amazonaws.com/fiap-tc-f4-targeting-reg
-  tag: targeting-service-8a53a63
+  tag: targeting-service-8e95dd2
 replicas: 1
 port: 8003
 resources:
