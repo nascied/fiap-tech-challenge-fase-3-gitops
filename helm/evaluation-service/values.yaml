@@ -20,10 +20,10 @@ configMap:
   FLAG_SERVICE_URL: "http://flag-service-svc:8002"
   TARGETING_SERVICE_URL: "http://targeting-service-svc:8003"
   # Substituídos automaticamente pelo update-infra-values.yaml a partir dos outputs
-  # sqs_queue_url, aws_elasticache_cluster_cluster_address do Terraform (fase3)
+  # sqs_queue_url, aws_elasticache_cluster_cache_nodes[0].address do Terraform (fase3)
   AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/372515679553/evaluation-events"
   AWS_REGION: "us-east-1"
-  REDIS_URL: "redis://null:6379"
+  REDIS_URL: "redis://fiap-tc-f4-cache.l1a5bf.0001.use1.cache.amazonaws.com:6379"
 secret:
   # AWS_* substituídos automaticamente pelo update-infra-values.yaml, com as credenciais
   # AWS repassadas pelo fase3 no repository_dispatch (mesmas usadas no terraform apply)
