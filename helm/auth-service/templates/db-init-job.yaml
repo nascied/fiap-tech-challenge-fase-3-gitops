@@ -22,11 +22,12 @@ spec:
           args:
             - 'psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /sql/init.sql'
           env:
+            # Valor literal do values.yaml, não via secretKeyRef: o Secret do Kubernetes
+            # pode não existir ainda nesta fase (hooks rodam antes dos recursos normais
+            # do release), e não faz sentido tornar o Secret também hook só por causa
+            # disso (ele viraria efêmero e seria removido pelo prune após o hook rodar).
             - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Chart.Name }}-secret
-                  key: DATABASE_URL
+              value: {{ .Values.secret.DATABASE_URL | quote }}
           volumeMounts:
             - name: sql
               mountPath: /sql
