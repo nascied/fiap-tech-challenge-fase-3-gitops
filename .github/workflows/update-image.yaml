@@ -7,10 +7,6 @@ on:
         description: "Nome do serviço, igual ao nome da pasta em helm/ (ex: auth-service)"
         required: true
         type: string
-      image_repository:
-        description: "Repositório da imagem no ECR, sem a tag"
-        required: true
-        type: string
       image_tag:
         description: "Tag da imagem publicada nesta execução"
         required: true
@@ -18,6 +14,9 @@ on:
     secrets:
       GITOPS_PUSH_TOKEN:
         description: "Token com permissão de push neste repositório (o job roda no contexto do repositório chamador, então o GITHUB_TOKEN padrão não serve)"
+        required: true
+      IMAGE_REPOSITORY:
+        description: "Repositório da imagem no ECR, sem a tag (o contexto secrets não pode ser referenciado dentro de with:, por isso entra aqui)"
         required: true
 
 jobs:
@@ -40,7 +39,7 @@ jobs:
       - name: Atualiza image.repository e image.tag
         run: |
           FILE="helm/${{ inputs.service }}/values.yaml"
-          yq -i '.image.repository = "${{ inputs.image_repository }}"' "$FILE"
+          yq -i '.image.repository = "${{ secrets.IMAGE_REPOSITORY }}"' "$FILE"
           yq -i '.image.tag = "${{ inputs.image_tag }}"' "$FILE"
           grep -q "${{ inputs.image_tag }}" "$FILE" \
             || { echo "Falha ao atualizar a tag da imagem em $FILE"; exit 1; }
