@@ -22,6 +22,11 @@ configMap:
   AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/372515679553/evaluation-events"
   AWS_DYNAMODB_TABLE: "ToggleMasterAnalytics"
   AWS_REGION: "us-east-1"
+  # Alinha a convenção semântica HTTP do OTel com a versão usada pelos serviços em Go
+  # (auth-service, evaluation-service), que só suportam a convenção nova. Sem isso, os
+  # serviços Python emitiriam a métrica antiga (http.server.duration) e fragmentariam
+  # o dashboard "Requisições" no Grafana.
+  OTEL_SEMCONV_STABILITY_OPT_IN: "http"
 secret:
   # AWS_* substituídos automaticamente pelo update-infra-values.yaml, com as credenciais
   # AWS repassadas pelo fase3 no repository_dispatch (mesmas usadas no terraform apply)

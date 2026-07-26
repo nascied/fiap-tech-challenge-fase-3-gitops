@@ -16,6 +16,11 @@ probe:
 configMap:
   AUTH_SERVICE_URL: "http://auth-service-svc:8001"
   PORT: "8003"
+  # Alinha a convenção semântica HTTP do OTel com a versão usada pelos serviços em Go
+  # (auth-service, evaluation-service), que só suportam a convenção nova. Sem isso, os
+  # serviços Python emitiriam a métrica antiga (http.server.duration) e fragmentariam
+  # o dashboard "Requisições" no Grafana.
+  OTEL_SEMCONV_STABILITY_OPT_IN: "http"
 secret:
   # Placeholder — substituído automaticamente pelo pipeline update-infra-values.yaml
   # a partir do output aws_db_instance_connection_strings do Terraform (fase3)
